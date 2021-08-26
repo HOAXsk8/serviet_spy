@@ -2,7 +2,6 @@
 
 from configparser import ConfigParser
 import psycopg2
-import main
 
 
 def config(FILENAME='database.ini', SECTION='postgresql'):
