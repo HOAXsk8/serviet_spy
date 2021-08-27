@@ -50,11 +50,11 @@ def execute_sql(mode, sql_statement):
 # SQL statements.
 
 # Select a random IP from the database.
-SELECT = """SELECT * FROM network_numbers WHERE (scanned_status = false) OFFSET floor(random() * 
+SELECT_RANDOM_ROW = """SELECT * FROM network_numbers WHERE (scanned_status = false) OFFSET floor(random() * 
 (SELECT COUNT(1) FROM network_numbers)) LIMIT 1;"""
 
 # Insert found open port to the database.
-INSERT = """INSERT INTO ss_port_data (ip_address, port) VALUES ('{}', '{}');"""  # Add .format when called.
+INSERT_SERVICE_DATA = """INSERT INTO ss_port_data (ip_address, port) VALUES ('{}', '{}');"""  # Add .format when called.
 
 # Update the scanned IP range.
-UPDATE = """UPDATE network_numbers SET scanned_status = true, completed_scans = completed_scans+1, WHERE network_number = '{}';"""  # Add .format when called.
+UPDATE_ROW = """UPDATE network_numbers SET scanned_status = true, completed_scans = completed_scans+1 WHERE network_number = '{}';"""  # Add .format when called.

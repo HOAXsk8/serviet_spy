@@ -9,7 +9,6 @@ import socket
 import csv
 import database_functions as db
 from itertools import product
-import sys
 
 
 def get_ip_range(ip):
@@ -55,20 +54,22 @@ def scanner(ip, port, TIMEOUT=0.2):
 def worker():
     execute = True
     port_list = create_port_list()
-    row = db.execute_sql('read', db.SELECT)
 
     while execute:
+        row = db.execute_sql('read', db.SELECT_RANDOM_ROW)
         cidr_ip = row[0][0]
         ip_range = get_ip_range(cidr_ip)
+        print(cidr_ip)
 
         for ip, port in product(ip_range, port_list):  # Loop through each IP scanning each port in the list
             open_port = scanner(ip, port)
             if open_port:
                 print(f'{ip}:{open_port}')
-                db.execute_sql('write', db.INSERT.format(ip, open_port))  # Write open ip:port to database.
+                db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
 
-        db.execute_sql('write', db.UPDATE.format(cidr_ip))  # Update the scanned row (scanned_status = true)
+        db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
 
 if __name__ == '__main__':
+    print('Serviet Spy running...')
     worker()
