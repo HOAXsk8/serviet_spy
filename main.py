@@ -9,6 +9,8 @@ import socket
 import csv
 import database_functions as db
 from itertools import product
+import psutil
+import multiprocessing
 
 
 def get_ip_range(ip):
@@ -51,6 +53,13 @@ def scanner(ip, port, TIMEOUT=0.2):
         pass
 
 
+def get_system_usage():
+    processor_usage = psutil.cpu_percent(0.1)  # CPU usage object at 0.1 second intervals
+    mem_usage = psutil.virtual_memory()  # Memory usage object
+    mem_usage = mem_usage[2]  # Memory % usage
+    return processor_usage, mem_usage
+
+
 def worker():
     execute = True
     port_list = create_port_list()
@@ -71,5 +80,15 @@ def worker():
 
 
 if __name__ == '__main__':
+    spawn_workers = True
+
     print('Serviet Spy running...')
-    worker()
+    while spawn_workers:
+        cpu_usage, memory_usage = get_system_usage()
+        if cpu_usage < 75 and memory_usage < 75:
+            print(cpu_usage)
+            print(memory_usage)
+            p = multiprocessing.Process(target=worker)
+            p.start()
+        else:
+            spawn_workers = False
