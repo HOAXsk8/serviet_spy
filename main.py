@@ -8,7 +8,6 @@ Use at your own risk! """
 import socket
 import csv
 import database_functions as db
-from itertools import product
 import psutil
 import multiprocessing
 
@@ -67,26 +66,29 @@ def worker():
         cidr_ip = row[0][0]
         ip_range = get_ip_range(cidr_ip)
 
-        for ip, port in product(ip_range, port_list):  # Loop through each IP scanning each port in the list
-            open_port = scanner(ip, port)
-            if open_port:
-                print(f'{ip}:{open_port}')
-                db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
-
+        for ip in ip_range:
+            for port in port_list:
+                open_port = scanner(ip, port)
+                if open_port:
+                    print(f'{ip}:{open_port}')
+                    db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
             db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
 
 if __name__ == '__main__':
     spawn_workers = True
+    work_force = 0
 
     print('Serviet Spy running...')
     while spawn_workers:
         cpu_usage, memory_usage = get_system_usage()
-        if cpu_usage <= 80 and memory_usage <= 80:
+        if cpu_usage < 80 and memory_usage < 90:
             print(memory_usage)
             p = multiprocessing.Process(target=worker)
             p.start()
+            work_force += 1
         else:
             spawn_workers = False
             print(cpu_usage)
             print(memory_usage)
+            print(f'{work_force} active workers')
