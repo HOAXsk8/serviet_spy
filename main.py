@@ -36,14 +36,12 @@ def create_port_list():
 
 
 def scanner(ip, port, TIMEOUT=0.2):
-    """ Connect to a given host and port, append (ip, port) to tuple and return. """
-
+    """ Attempt to Connect to a given host and port. Return open port """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(TIMEOUT)
         connection = s.connect_ex((ip, int(port)))
         if connection == 0:
-            print(f'[+] {str(ip)}:{str(port)}')
             return port
         else:
             pass
@@ -68,7 +66,6 @@ def worker():
         row = db.execute_sql('read', db.SELECT_RANDOM_ROW)
         cidr_ip = row[0][0]
         ip_range = get_ip_range(cidr_ip)
-        print(cidr_ip)
 
         for ip, port in product(ip_range, port_list):  # Loop through each IP scanning each port in the list
             open_port = scanner(ip, port)
@@ -85,10 +82,11 @@ if __name__ == '__main__':
     print('Serviet Spy running...')
     while spawn_workers:
         cpu_usage, memory_usage = get_system_usage()
-        if cpu_usage < 75 and memory_usage < 75:
-            print(cpu_usage)
+        if cpu_usage <= 80 and memory_usage <= 80:
             print(memory_usage)
             p = multiprocessing.Process(target=worker)
             p.start()
         else:
             spawn_workers = False
+            print(cpu_usage)
+            print(memory_usage)
