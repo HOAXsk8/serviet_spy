@@ -70,7 +70,6 @@ def worker():
             for port in port_list:
                 open_port = scanner(ip, port)
                 if open_port:
-                    print(f'{ip}:{open_port}')
                     db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
             db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
@@ -79,7 +78,6 @@ if __name__ == '__main__':
     spawn_workers = True
     work_force = 0
 
-    print('Serviet Spy running...')
     while spawn_workers:
         cpu_usage, memory_usage = get_system_usage()
         if cpu_usage < 80 and memory_usage < 90:
@@ -89,6 +87,6 @@ if __name__ == '__main__':
             work_force += 1
         else:
             spawn_workers = False
-            print(cpu_usage)
-            print(memory_usage)
+            print(f'CPU used: {cpu_usage}%')
+            print(f'Memory used: {memory_usage}%')
             print(f'{work_force} active workers')
