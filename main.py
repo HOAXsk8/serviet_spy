@@ -73,7 +73,7 @@ def worker():
                 print(f'{ip}:{open_port}')
                 db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
 
-        db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
+            db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
 
 if __name__ == '__main__':
