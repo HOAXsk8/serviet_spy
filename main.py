@@ -1,9 +1,8 @@
 # main.py
 
-""" This tool was created for research purposes only. It can be used to gather information about software used on
+""" This tool was created for security research purposes. It can be used to gather information about software used on
 protocols specified by the user. This tool will not exploit anything, however, it will continuously scan random IP's and
-momentarily establish a connection to a listening port and listen for a response.
-Use at your own risk! """
+momentarily establish a connection to a listening port and listen for a response. """
 
 import socket
 import csv
@@ -12,11 +11,12 @@ import psutil
 import multiprocessing
 
 
-def get_ip_range(ip):
+def get_ip_range(cidr_ip_range):
+    """ Take an IP range, iterate hosts 1-254, append host to the IP address and return a new IP for scanning """
     ip_list = []
 
-    for x in range(1, 255):
-        ip = ip.split('.')
+    for x in range(1, 254 + 1):  # Iterate through hosts 1 - 254
+        ip = cidr_ip_range.split('.')
         ip[-1] = str(x)
         ip = '.'.join(ip)
         ip_list.append(ip)
@@ -58,8 +58,9 @@ def get_system_usage():
 
 
 def worker():
-    execute = True
+    """ This function defines the task each worker will execute """
     port_list = create_port_list()
+    execute = True
 
     while execute:
         row = db.execute_sql('read', db.SELECT_RANDOM_ROW)
@@ -68,25 +69,32 @@ def worker():
 
         for ip in ip_range:
             for port in port_list:
+                print(f'{ip}:{port}')
                 open_port = scanner(ip, port)
                 if open_port:
                     db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
+
             db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
 
-if __name__ == '__main__':
-    spawn_workers = True
+def spawn_work_force(max_cpu_utilization=50, max_ram_utilization=50):
+    """ Continuously spawn workers/processes until the max CPU or max RAM usage is reached. """
+    spawn_worker = True
     work_force = 0
 
-    while spawn_workers:
-        cpu_usage, memory_usage = get_system_usage()
-        if cpu_usage < 80 and memory_usage < 90:
-            print(memory_usage)
-            p = multiprocessing.Process(target=worker)
-            p.start()
+    while spawn_worker:
+        cpu_utilization, ram_utilization = get_system_usage()
+        if cpu_utilization < max_cpu_utilization and ram_utilization < max_ram_utilization:
+            print(ram_utilization)
+            process = multiprocessing.Process(target=worker)
+            process.start()
             work_force += 1
         else:
-            spawn_workers = False
-            print(f'CPU used: {cpu_usage}%')
-            print(f'Memory used: {memory_usage}%')
-            print(f'{work_force} active workers')
+            spawn_worker = False
+            print(f'CPU used: {cpu_utilization}%')
+            print(f'Memory used: {ram_utilization}%')
+            print(f'Active workers: {work_force}')
+
+
+if __name__ == '__main__':
+    spawn_work_force(70, 70)
