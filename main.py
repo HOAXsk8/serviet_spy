@@ -11,7 +11,7 @@ import psutil
 import multiprocessing
 
 
-def get_ip_range(cidr_ip_range):
+def get_ip_list(cidr_ip_range):
     """ Take an IP range, iterate hosts 1-254, append host to the IP address and return a new IP for scanning """
     ip_list = []
 
@@ -65,7 +65,7 @@ def worker():
     while execute:
         row = db.execute_sql('read', db.SELECT_RANDOM_ROW)
         cidr_ip = row[0][0]
-        ip_range = get_ip_range(cidr_ip)
+        ip_range = get_ip_list(cidr_ip)
 
         for ip in ip_range:
             for port in port_list:
