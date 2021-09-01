@@ -51,7 +51,7 @@ def scanner(ip, port, TIMEOUT=0.2):
 
 
 def get_system_usage():
-    processor_usage = psutil.cpu_percent(0.1)  # CPU usage object at 0.1 second intervals
+    processor_usage = psutil.cpu_percent(0.01)  # CPU usage object at 0.1 second intervals
     mem_usage = psutil.virtual_memory()  # Memory usage object
     mem_usage = mem_usage[2]  # Memory % usage
     return processor_usage, mem_usage
