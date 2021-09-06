@@ -69,7 +69,7 @@ def worker():
 
         for ip in ip_range:
             for port in port_list:
-                print(f'{ip}:{port}')
+                # print(f'{ip}:{port}')
                 open_port = scanner(ip, port)
                 if open_port:
                     db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
@@ -77,7 +77,7 @@ def worker():
             db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
 
-def spawn_work_force(max_cpu_utilization=50, max_ram_utilization=50):
+def spawn_work_force(max_cpu_utilization=50, max_ram_utilization=50):  # Set default resource usage
     """ Continuously spawn workers/processes until the max CPU or max RAM usage is reached. """
     spawn_worker = True
     work_force = 0
