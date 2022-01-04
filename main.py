@@ -1,8 +1,8 @@
 # main.py
 
-""" This tool was created for security research purposes. It can be used to gather information about software used on
-protocols specified by the user. This tool will not exploit anything, however, it will continuously scan random IP's and
-momentarily establish a connection to a listening port and listen for a response. """
+""" This tool was created for security research purposes. It may be used within a network that you have permission to do
+so. Any unauthorised attempts to exploit a network using this tool is forbidden. The developer takes no responsibility
+for your actions. """
 
 import socket
 import csv
@@ -11,12 +11,12 @@ import psutil
 import multiprocessing
 
 
-def get_ip_list(cidr_ip_range):
+def create_ip_list(cidr_ip_range):
     """ Take an IP range, iterate hosts 1-254, append host to the IP address and return a new IP for scanning """
     ip_list = []
+    ip = cidr_ip_range.split('.')
 
     for x in range(1, 254 + 1):  # Iterate through hosts 1 - 254
-        ip = cidr_ip_range.split('.')
         ip[-1] = str(x)
         ip = '.'.join(ip)
         ip_list.append(ip)
@@ -25,13 +25,14 @@ def get_ip_list(cidr_ip_range):
 
 def create_port_list():
     """ Create a list of top TCP and UDP ports """
-    top_ports = []  # List populated by csv file upon program execution, 1800+ ports
+    file = 'top-ports.csv'
+    port_list = []  # List populated by csv file upon program execution, 1800+ ports
 
-    with open('top-ports.csv', newline='') as csv_file:
+    with open(file, newline='') as csv_file:
         reader = csv.reader(csv_file, delimiter=' ', quotechar='|')
         for line in reader:
-            top_ports.append(*line)
-    return top_ports
+            port_list.append(*line)
+    return port_list
 
 
 def scanner(ip, port, TIMEOUT=0.2):
@@ -65,7 +66,7 @@ def worker():
     while execute:
         row = db.execute_sql('read', db.SELECT_RANDOM_ROW)
         cidr_ip = row[0][0]
-        ip_range = get_ip_list(cidr_ip)
+        ip_range = create_ip_list(cidr_ip)
 
         for ip in ip_range:
             for port in port_list:
@@ -85,7 +86,6 @@ def spawn_work_force(max_cpu_utilization=50, max_ram_utilization=50):  # Set def
     while spawn_worker:
         cpu_utilization, ram_utilization = get_system_usage()
         if cpu_utilization < max_cpu_utilization and ram_utilization < max_ram_utilization:
-            print(ram_utilization)
             process = multiprocessing.Process(target=worker)
             process.start()
             work_force += 1
