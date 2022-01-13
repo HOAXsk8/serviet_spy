@@ -11,12 +11,12 @@ import psutil
 import multiprocessing
 
 
-def create_ip_list(cidr_ip_range):
-    """ Take an IP range, iterate hosts 1-254, append host to the IP address and return a new IP for scanning """
+def create_ip_list(cidr_ip_range="192.168.1.0/24"):
+    """ Take an IP range, iterate hosts 1-254, append host to the IP address and return a new IP for scanning"""
     ip_list = []
-    ip = cidr_ip_range.split('.')
 
     for x in range(1, 254 + 1):  # Iterate through hosts 1 - 254
+        ip = cidr_ip_range.split('.')
         ip[-1] = str(x)
         ip = '.'.join(ip)
         ip_list.append(ip)
@@ -25,7 +25,7 @@ def create_ip_list(cidr_ip_range):
 
 def create_port_list():
     """ Create a list of top TCP and UDP ports """
-    file = 'top-ports.csv'
+    file = 'port-numbers.csv'
     port_list = []  # List populated by csv file upon program execution, 1800+ ports
 
     with open(file, newline='') as csv_file:
@@ -64,21 +64,23 @@ def worker():
     execute = True
 
     while execute:
+        open_ports = []
+
         row = db.execute_sql('read', db.SELECT_RANDOM_ROW)
         cidr_ip = row[0][0]
         ip_range = create_ip_list(cidr_ip)
 
         for ip in ip_range:
             for port in port_list:
-                # print(f'{ip}:{port}')
                 open_port = scanner(ip, port)
                 if open_port:
-                    db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_port))  # Write open ip:port to database.
-
+                    open_ports.append(open_port)
+                    print(f"[*] Port found")
+                    db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_ports))  # Write open ip:port to database.
             db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
 
-def spawn_work_force(max_cpu_utilization=50, max_ram_utilization=50):  # Set default resource usage
+def spawn_work_force(max_cpu_utilization=70, max_ram_utilization=70):  # Set default resource usage
     """ Continuously spawn workers/processes until the max CPU or max RAM usage is reached. """
     spawn_worker = True
     work_force = 0
@@ -97,4 +99,4 @@ def spawn_work_force(max_cpu_utilization=50, max_ram_utilization=50):  # Set def
 
 
 if __name__ == '__main__':
-    spawn_work_force(70, 70)
+    spawn_work_force(80, 80)

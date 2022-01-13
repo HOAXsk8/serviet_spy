@@ -54,7 +54,7 @@ SELECT_RANDOM_ROW = """SELECT * FROM network_numbers WHERE (scanned_status = fal
 (SELECT COUNT(1) FROM network_numbers)) LIMIT 1;"""
 
 # Insert found open port to the database.
-INSERT_SERVICE_DATA = """INSERT INTO ss_port_data (ip_address, port) VALUES ('{}', '{}');"""  # Add .format when called.
+INSERT_SERVICE_DATA = """INSERT INTO ss_port_data (ip_address, ports) VALUES ('{}', '{}');"""  # Add .format when called.
 
 # Update the scanned IP range.
-UPDATE_ROW = """UPDATE network_numbers SET scanned_status = true, completed_scans = completed_scans+1 WHERE network_number = '{}';"""  # Add .format when called.
+UPDATE_ROW = """UPDATE network_numbers SET scanned_status = true, times_scanned = times_scanned+1 WHERE network_number = '{}';"""  # Add .format when called.
