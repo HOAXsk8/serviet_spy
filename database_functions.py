@@ -32,13 +32,15 @@ def execute_sql(mode, sql_statement):
         if mode == "read":
             cur.execute(sql_statement)
             result = cur.fetchall()
+            conn.close()
             return result
         elif mode == "write":
             cur.execute(sql_statement)
             conn.commit()
+            conn.close()
         else:
             print("Please define read or write mode")
-        cur.close()  # Close the connection to the PostgreSQL server.
+        conn.close()
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -54,7 +56,7 @@ SELECT_RANDOM_ROW = """SELECT * FROM network_numbers WHERE (scanned_status = fal
 (SELECT COUNT(1) FROM network_numbers)) LIMIT 1;"""
 
 # Insert found open port to the database.
-INSERT_SERVICE_DATA = """INSERT INTO ss_port_data (ip_address, ports) VALUES ('{}', '{}');"""  # Add .format when called.
+INSERT_SERVICE_DATA = """INSERT INTO ss_port_data (ip_address, open_ports) VALUES ('{}', '{}');"""  # Add .format when called.
 
 # Update the scanned IP range.
 UPDATE_ROW = """UPDATE network_numbers SET scanned_status = true, times_scanned = times_scanned+1 WHERE network_number = '{}';"""  # Add .format when called.

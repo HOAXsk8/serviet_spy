@@ -14,19 +14,20 @@ import multiprocessing
 def create_ip_list(cidr_ip_range="192.168.1.0/24"):
     """ Take an IP range, iterate hosts 1-254, append host to the IP address and return a new IP for scanning"""
     ip_list = []
+    ip = cidr_ip_range.split('.')
 
     for x in range(1, 254 + 1):  # Iterate through hosts 1 - 254
-        ip = cidr_ip_range.split('.')
         ip[-1] = str(x)
-        ip = '.'.join(ip)
-        ip_list.append(ip)
+        new_ip = ip
+        new_ip = '.'.join(ip)
+        ip_list.append(new_ip)
     return ip_list
 
 
 def create_port_list():
     """ Create a list of top TCP and UDP ports """
-    file = 'port-numbers.csv'
-    port_list = []  # List populated by csv file upon program execution, 1800+ ports
+    file = 'port-numbers.csv'  # Specify the name of the file containing a list of ports
+    port_list = []  # List populated by csv file
 
     with open(file, newline='') as csv_file:
         reader = csv.reader(csv_file, delimiter=' ', quotechar='|')
@@ -54,7 +55,7 @@ def scanner(ip, port, TIMEOUT=0.2):
 def get_system_usage():
     processor_usage = psutil.cpu_percent(0.01)  # CPU usage object at 0.1 second intervals
     mem_usage = psutil.virtual_memory()  # Memory usage object
-    mem_usage = mem_usage[2]  # Memory % usage
+    mem_usage = mem_usage[2]  # Memory usage percentage
     return processor_usage, mem_usage
 
 
@@ -64,39 +65,38 @@ def worker():
     execute = True
 
     while execute:
-        open_ports = []
-
         row = db.execute_sql('read', db.SELECT_RANDOM_ROW)
         cidr_ip = row[0][0]
         ip_range = create_ip_list(cidr_ip)
+        db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
 
         for ip in ip_range:
+            open_ports = []
             for port in port_list:
                 open_port = scanner(ip, port)
                 if open_port:
-                    open_ports.append(open_port)
-                    print(f"[*] Port found")
-                    db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, open_ports))  # Write open ip:port to database.
-            db.execute_sql('write', db.UPDATE_ROW.format(cidr_ip))  # Update the scanned row (scanned_status = true)
+                    print(f"[*] Port '{open_port}' found")
+                    open_ports.append("{"+open_port+"}")
+            if len(open_ports) > 0:
+                for i in open_ports:
+                    db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, i))  # Write open ip:port to database.
 
 
-def spawn_work_force(max_cpu_utilization=70, max_ram_utilization=70):  # Set default resource usage
+def spawn_work_force(MAX_RAM_UTILIZATION=70):  # Set default resource usage
     """ Continuously spawn workers/processes until the max CPU or max RAM usage is reached. """
     spawn_worker = True
     work_force = 0
 
     while spawn_worker:
         cpu_utilization, ram_utilization = get_system_usage()
-        if cpu_utilization < max_cpu_utilization and ram_utilization < max_ram_utilization:
+        if ram_utilization < MAX_RAM_UTILIZATION:
             process = multiprocessing.Process(target=worker)
             process.start()
             work_force += 1
         else:
             spawn_worker = False
-            print(f'CPU used: {cpu_utilization}%')
-            print(f'Memory used: {ram_utilization}%')
-            print(f'Active workers: {work_force}')
+            print(f"CPU used = {cpu_utilization}\nRAM used = {ram_utilization}\nWorkers spawned = {work_force}")
 
 
 if __name__ == '__main__':
-    spawn_work_force(80, 80)
+    spawn_work_force(90)
