@@ -9,6 +9,7 @@ import csv
 import database_functions as db
 import psutil
 import multiprocessing
+import time
 
 
 def create_ip_list(cidr_ip_range="192.168.1.0/24"):
@@ -53,6 +54,7 @@ def scanner(ip, port, TIMEOUT=0.2):
 
 
 def get_system_usage():
+    """ Get the current CPU and RAM usage percentage """
     processor_usage = psutil.cpu_percent(0.01)  # CPU usage object at 0.1 second intervals
     mem_usage = psutil.virtual_memory()  # Memory usage object
     mem_usage = mem_usage[2]  # Memory usage percentage
@@ -82,21 +84,23 @@ def worker():
                     db.execute_sql('write', db.INSERT_SERVICE_DATA.format(ip, i))  # Write open ip:port to database.
 
 
-def spawn_work_force(MAX_RAM_UTILIZATION=70):  # Set default resource usage
+def spawn_work_force(MAX_RAM_UTILIZATION=70, MAX_CPU_UTILIZATION=70):  # Set default resource usage
     """ Continuously spawn workers/processes until the max CPU or max RAM usage is reached. """
     spawn_worker = True
     work_force = 0
 
     while spawn_worker:
         cpu_utilization, ram_utilization = get_system_usage()
-        if ram_utilization < MAX_RAM_UTILIZATION:
+        if ram_utilization < MAX_RAM_UTILIZATION and cpu_utilization < MAX_CPU_UTILIZATION:
             process = multiprocessing.Process(target=worker)
             process.start()
             work_force += 1
+            print(work_force)
+            time.sleep(2)
         else:
             spawn_worker = False
             print(f"CPU used = {cpu_utilization}\nRAM used = {ram_utilization}\nWorkers spawned = {work_force}")
 
 
 if __name__ == '__main__':
-    spawn_work_force(90)
+    spawn_work_force(90, 90)
